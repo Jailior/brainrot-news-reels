@@ -7,7 +7,6 @@ import {
   View,
   ViewToken,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -90,17 +89,26 @@ export default function FeedScreen() {
 
   const [feedData, setFeedData] = useState<ItemData[]>(() => generateInfiniteData(0, 10));
   
-  // Handle scroll detection and haptic feedback
+  // Handle scroll detection
   const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0 && viewableItems[0].index !== null) {
       const newIndex = viewableItems[0].index;
       if (newIndex !== currentIndex) {
         setCurrentIndex(newIndex);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         console.log(`📱 Scrolled to item ${newIndex + 1}`);
       }
     }
   }, [currentIndex]);
+
+  // Force single-item scrolling by snapping to the nearest item
+  const onMomentumScrollEnd = useCallback((event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const currentItem = Math.round(offsetY / SCREEN_HEIGHT);
+    flatListRef.current?.scrollToIndex({
+      index: currentItem,
+      animated: false,
+    });
+  }, []);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -135,6 +143,8 @@ export default function FeedScreen() {
         snapToInterval={SCREEN_HEIGHT}
         snapToAlignment="start"
         decelerationRate="fast"
+        disableIntervalMomentum={true}
+        onMomentumScrollEnd={onMomentumScrollEnd}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         onEndReached={handleEndReached}
