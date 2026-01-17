@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     
     # Claude API Configuration
     open_router_api_key: Optional[str] = os.getenv("LLM_API_KEY")
-    openrouter_base_url: str = os.getenv("OPENROUTER_URL")
+    openrouter_base_url: Optional[str] = os.getenv("OPENROUTER_URL")
     openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-5.2")
     
     # ElevenLabs API Configuration
@@ -69,6 +69,9 @@ class Settings(BaseSettings):
         """Pydantic configuration."""
         env_file = ".env"
         case_sensitive = False
+    
+    # Global constants
+    MAX_CHAR_TO_DISPLAY: int = 100
 
 load_dotenv()
 
