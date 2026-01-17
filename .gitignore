@@ -1,28 +1,7 @@
-# Python
-**/__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-.cache/
-venv/
-.venv/
-backend/venv/
-
-# Environment files
+venv/**
+backend/venv/**
 .env
 backend/.env
-
-
-# IDEs and OS
-.vscode/
-.idea/
-.DS_Store
-*.swp
-*.swo
-
-# Node (if any at root)
-node_modules/
+brainrot_news_reels_backend.egg-info/**
+**/__pycache__/**
+backend/__pycache__/**
