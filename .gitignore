@@ -1,11 +1,28 @@
-venv/**
-backend/venv/**
-<<<<<<< HEAD
-.env
-=======
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.cache/
+venv/
+.venv/
+backend/venv/
+
+# Environment files
 .env
 backend/.env
-brainrot_news_reels_backend.egg-info/**
-__pycache__
-backend/__pycache__/**
->>>>>>> 58358139a1da6caac78b067bb9b895537c150378
+
+
+# IDEs and OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Node (if any at root)
+node_modules/
