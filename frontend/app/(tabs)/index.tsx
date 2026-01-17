@@ -1,98 +1,181 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import {
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  ViewToken,
+} from 'react-native';
+import * as Haptics from 'expo-haptics';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export default function HomeScreen() {
+// 5 placeholder items with minimal aesthetics
+const PLACEHOLDER_DATA = [
+  {
+    id: '1',
+    text: 'BREAKING NEWS',
+    subtitle: 'Swipe up to explore',
+    background: '#111111',
+  },
+  {
+    id: '2',
+    text: 'TRENDING NOW',
+    subtitle: 'The latest stories',
+    background: '#222222',
+  },
+  {
+    id: '3',
+    text: 'VIRAL MOMENT',
+    subtitle: 'Everyone is talking about this',
+    background: '#333333',
+  },
+  {
+    id: '4',
+    text: 'EXCLUSIVE',
+    subtitle: 'You saw it here first',
+    background: '#444444',
+  },
+  {
+    id: '5',
+    text: 'JUST IN',
+    subtitle: 'Fresh off the press',
+    background: '#555555',
+  },
+];
+
+interface ItemData {
+  id: string;
+  text: string;
+  subtitle: string;
+  background: string;
+  virtualIndex: number;
+}
+
+interface ReelItemProps {
+  item: ItemData;
+}
+
+function ReelItem({ item }: ReelItemProps) {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={[styles.itemContainer, { backgroundColor: item.background }]}>
+      <View style={styles.contentContainer}>
+        <Text style={styles.mainText}>{item.text}</Text>
+        <Text style={styles.subtitleText}>{item.subtitle}</Text>
+      </View>
+    </View>
+  );
+}
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+export default function FeedScreen() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
+  
+  // Create infinite data by cycling through placeholders
+  const generateInfiniteData = useCallback((startIndex: number, count: number): ItemData[] => {
+    const data: ItemData[] = [];
+    for (let i = 0; i < count; i++) {
+      const virtualIndex = startIndex + i;
+      const originalIndex = virtualIndex % PLACEHOLDER_DATA.length;
+      const originalItem = PLACEHOLDER_DATA[originalIndex >= 0 ? originalIndex : originalIndex + PLACEHOLDER_DATA.length];
+      data.push({
+        ...originalItem,
+        id: `${virtualIndex}`,
+        virtualIndex: Math.abs(virtualIndex % PLACEHOLDER_DATA.length),
+      });
+    }
+    return data;
+  }, []);
+
+  const [feedData, setFeedData] = useState<ItemData[]>(() => generateInfiniteData(0, 10));
+  
+  // Handle scroll detection and haptic feedback
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems.length > 0 && viewableItems[0].index !== null) {
+      const newIndex = viewableItems[0].index;
+      if (newIndex !== currentIndex) {
+        setCurrentIndex(newIndex);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        console.log(`📱 Scrolled to item ${newIndex + 1}`);
+      }
+    }
+  }, [currentIndex]);
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
+
+  // Handle infinite scroll
+  const handleEndReached = useCallback(() => {
+    const lastIndex = feedData.length;
+    const newItems = generateInfiniteData(lastIndex, 5);
+    setFeedData(prev => [...prev, ...newItems]);
+  }, [feedData.length, generateInfiniteData]);
+
+  const renderItem = useCallback(({ item }: { item: ItemData }) => (
+    <ReelItem item={item} />
+  ), []);
+
+  const getItemLayout = useCallback((_: any, index: number) => ({
+    length: SCREEN_HEIGHT,
+    offset: SCREEN_HEIGHT * index,
+    index,
+  }), []);
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        ref={flatListRef}
+        data={feedData}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+        snapToInterval={SCREEN_HEIGHT}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        getItemLayout={getItemLayout}
+        removeClippedSubviews
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        initialNumToRender={2}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  itemContainer: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  contentContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  mainText: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    letterSpacing: 2,
+  },
+  subtitleText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+    marginTop: 12,
+    fontWeight: '400',
   },
 });
