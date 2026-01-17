@@ -1,135 +1,24 @@
-import { useCallback, useRef, useState } from 'react';
-import {
-  Dimensions,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-  ViewToken,
-} from 'react-native';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// 5 placeholder items with minimal aesthetics
-const PLACEHOLDER_DATA = [
-  {
-    id: '1',
-    text: 'BREAKING NEWS',
-    subtitle: 'Swipe up to explore',
-    background: '#111111',
-  },
-  {
-    id: '2',
-    text: 'TRENDING NOW',
-    subtitle: 'The latest stories',
-    background: '#222222',
-  },
-  {
-    id: '3',
-    text: 'VIRAL MOMENT',
-    subtitle: 'Everyone is talking about this',
-    background: '#333333',
-  },
-  {
-    id: '4',
-    text: 'EXCLUSIVE',
-    subtitle: 'You saw it here first',
-    background: '#444444',
-  },
-  {
-    id: '5',
-    text: 'JUST IN',
-    subtitle: 'Fresh off the press',
-    background: '#555555',
-  },
-];
-
-interface ItemData {
-  id: string;
-  text: string;
-  subtitle: string;
-  background: string;
-  virtualIndex: number;
-}
-
-interface ReelItemProps {
-  item: ItemData;
-}
-
-function ReelItem({ item }: ReelItemProps) {
-  return (
-    <View style={[styles.itemContainer, { backgroundColor: item.background }]}>
-      <View style={styles.contentContainer}>
-        <Text style={styles.mainText}>{item.text}</Text>
-        <Text style={styles.subtitleText}>{item.subtitle}</Text>
-      </View>
-    </View>
-  );
-}
+import { useCallback } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { ReelItem, ReelItemData } from '@/components/reel-item';
+import { useReelFeed } from '@/hooks/use-reel-feed';
 
 export default function FeedScreen() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
-  
-  // Create infinite data by cycling through placeholders
-  const generateInfiniteData = useCallback((startIndex: number, count: number): ItemData[] => {
-    const data: ItemData[] = [];
-    for (let i = 0; i < count; i++) {
-      const virtualIndex = startIndex + i;
-      const originalIndex = virtualIndex % PLACEHOLDER_DATA.length;
-      const originalItem = PLACEHOLDER_DATA[originalIndex >= 0 ? originalIndex : originalIndex + PLACEHOLDER_DATA.length];
-      data.push({
-        ...originalItem,
-        id: `${virtualIndex}`,
-        virtualIndex: Math.abs(virtualIndex % PLACEHOLDER_DATA.length),
-      });
-    }
-    return data;
-  }, []);
+  const {
+    currentIndex,
+    flatListRef,
+    feedData,
+    onViewableItemsChanged,
+    onMomentumScrollEnd,
+    viewabilityConfig,
+    handleEndReached,
+    getItemLayout,
+    SCREEN_HEIGHT,
+  } = useReelFeed();
 
-  const [feedData, setFeedData] = useState<ItemData[]>(() => generateInfiniteData(0, 10));
-  
-  // Handle scroll detection
-  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (viewableItems.length > 0 && viewableItems[0].index !== null) {
-      const newIndex = viewableItems[0].index;
-      if (newIndex !== currentIndex) {
-        setCurrentIndex(newIndex);
-        console.log(`📱 Scrolled to item ${newIndex + 1}`);
-      }
-    }
-  }, [currentIndex]);
-
-  // Force single-item scrolling by snapping to the nearest item
-  const onMomentumScrollEnd = useCallback((event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const currentItem = Math.round(offsetY / SCREEN_HEIGHT);
-    flatListRef.current?.scrollToIndex({
-      index: currentItem,
-      animated: false,
-    });
-  }, []);
-
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
-  }).current;
-
-  // Handle infinite scroll
-  const handleEndReached = useCallback(() => {
-    const lastIndex = feedData.length;
-    const newItems = generateInfiniteData(lastIndex, 5);
-    setFeedData(prev => [...prev, ...newItems]);
-  }, [feedData.length, generateInfiniteData]);
-
-  const renderItem = useCallback(({ item }: { item: ItemData }) => (
+  const renderItem = useCallback(({ item }: { item: ReelItemData }) => (
     <ReelItem item={item} />
   ), []);
-
-  const getItemLayout = useCallback((_: any, index: number) => ({
-    length: SCREEN_HEIGHT,
-    offset: SCREEN_HEIGHT * index,
-    index,
-  }), []);
 
   return (
     <View style={styles.container}>
@@ -163,29 +52,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
-  },
-  itemContainer: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  mainText: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    letterSpacing: 2,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    textAlign: 'center',
-    marginTop: 12,
-    fontWeight: '400',
   },
 });
