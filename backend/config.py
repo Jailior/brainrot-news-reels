@@ -37,8 +37,8 @@ class Settings(BaseSettings):
     
     # Claude API Configuration
     claude_api_key: Optional[str] = os.getenv("CLAUDE_API_KEY")
-    claude_base_url: str = os.getenv("CLAUDE_BASE_URL", "https://api.anthropic.com")
-    claude_model: str = os.getenv("CLAUDE_MODEL", "claude-3-sonnet-20240229")
+    openrouter_base_url: str = os.getenv("OPENROUTER_BASE_URL", os.getenv("OPENROUTER_URL"))
+    openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-5.2")
     
     # ElevenLabs API Configuration
     elevenlabs_api_key: Optional[str] = os.getenv("ELEVENLABS_API_KEY")
