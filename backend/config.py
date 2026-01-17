@@ -15,6 +15,7 @@ Interactions:
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
 
 
 class Settings(BaseSettings):
@@ -69,6 +70,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = False
 
+load_dotenv()
 
 # Global settings instance
 settings = Settings()
