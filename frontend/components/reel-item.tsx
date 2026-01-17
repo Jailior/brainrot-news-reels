@@ -26,6 +26,8 @@ export const ReelItem = React.memo(({ item }: ReelItemProps) => {
   );
 });
 
+ReelItem.displayName = 'ReelItem';
+
 const styles = StyleSheet.create({
   itemContainer: {
     width: SCREEN_WIDTH,

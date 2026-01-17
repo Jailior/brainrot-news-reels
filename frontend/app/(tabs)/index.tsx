@@ -5,7 +5,6 @@ import { useReelFeed } from '@/hooks/use-reel-feed';
 
 export default function FeedScreen() {
   const {
-    currentIndex,
     flatListRef,
     feedData,
     onViewableItemsChanged,
@@ -16,9 +15,10 @@ export default function FeedScreen() {
     SCREEN_HEIGHT,
   } = useReelFeed();
 
-  const renderItem = useCallback(({ item }: { item: ReelItemData }) => (
-    <ReelItem item={item} />
-  ), []);
+  const renderItem = useCallback(
+    ({ item }: { item: ReelItemData }) => <ReelItem item={item} />,
+    []
+  );
 
   return (
     <View style={styles.container}>
