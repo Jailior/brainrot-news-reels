@@ -1,11 +1,7 @@
 venv/**
 backend/venv/**
-<<<<<<< HEAD
-.env
-=======
 .env
 backend/.env
 brainrot_news_reels_backend.egg-info/**
 __pycache__
 backend/__pycache__/**
->>>>>>> 58358139a1da6caac78b067bb9b895537c150378
