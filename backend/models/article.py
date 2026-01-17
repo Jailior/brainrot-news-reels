@@ -33,6 +33,7 @@ class Article(Base):
     """
     
     __tablename__ = "articles"
+    __allow_unmapped__ = True
     
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(500), nullable=False, index=True)

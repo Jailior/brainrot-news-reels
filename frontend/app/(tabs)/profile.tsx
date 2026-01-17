@@ -17,6 +17,8 @@ export default function ProfileScreen() {
   );
   const iconColor = useThemeColor({}, 'icon');
 
+  if (!user) return null;
+
   const renderSettingItem = (item: SettingItem) => (
     <Pressable
       key={item.id}

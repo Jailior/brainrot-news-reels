@@ -30,6 +30,7 @@ class BackgroundVideo(Base):
     """
     
     __tablename__ = "background_videos"
+    __allow_unmapped__ = True
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)

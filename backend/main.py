@@ -18,7 +18,7 @@ from contextlib import asynccontextmanager
 
 from backend.config import settings
 from backend.database import init_db
-from backend.api.routes import reels, generate
+from backend.api.routes import reels, generate, auth
 
 
 @asynccontextmanager
@@ -59,6 +59,7 @@ app.add_middleware(
 # Register API routes
 app.include_router(reels.router, prefix=settings.api_prefix, tags=["reels"])
 app.include_router(generate.router, prefix=settings.api_prefix, tags=["generate"])
+app.include_router(auth.router, prefix=settings.api_prefix, tags=["auth"])
 
 
 @app.get("/")

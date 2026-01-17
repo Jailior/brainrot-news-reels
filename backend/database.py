@@ -67,13 +67,14 @@ def init_db() -> None:
     
     Interactions:
         - Uses Base from this module (which all models inherit from)
-        - Creates tables for: Article, Reel, Caption, BackgroundVideo
+        - Creates tables for: Article, Reel, Caption, BackgroundVideo, User
     """
     # Import all models to ensure they're registered with Base
     from backend.models.article import Article
     from backend.models.reel import Reel
     from backend.models.caption import Caption
     from backend.models.background_video import BackgroundVideo
+    from backend.models.user import User
     
     # Create all tables
     Base.metadata.create_all(bind=engine)

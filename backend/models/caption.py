@@ -34,6 +34,7 @@ class Caption(Base):
     """
     
     __tablename__ = "captions"
+    __allow_unmapped__ = True
     
     id = Column(Integer, primary_key=True, index=True)
     reel_id = Column(Integer, ForeignKey("reels.id"), nullable=False, index=True)

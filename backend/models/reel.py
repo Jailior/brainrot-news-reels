@@ -48,7 +48,7 @@ class Reel(Base):
         article: Relationship to the source Article
         captions: Relationship to Caption objects for this reel
     """
-    
+    __allow_unmapped__ = True
     __tablename__ = "reels"
     
     id = Column(Integer, primary_key=True, index=True)

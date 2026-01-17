@@ -1,20 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-
-export interface UserProfile {
-  name: string;
-  email: string;
-  avatarUrl?: string;
-}
+import { useAuth } from '@/context/auth-context';
 
 export function useProfile() {
   const router = useRouter();
-
-  // Mock user data - in a real app, this would come from an auth context or API
-  const user: UserProfile = {
-    name: 'User Name',
-    email: 'user@example.com',
-  };
+  const { user, signOut } = useAuth();
 
   const navigateToSetting = useCallback(
     (label: string) => {
@@ -28,8 +18,8 @@ export function useProfile() {
 
   const logout = useCallback(() => {
     console.log('Logging out...');
-    // Implement actual logout logic here
-  }, []);
+    signOut();
+  }, [signOut]);
 
   return {
     user,
