@@ -26,27 +26,29 @@ class VideoManager {
   }
 
   /**
-   * Set the active player. This will stop the previous player.
+   * Set the active player. This will stop the previous player FIRST.
    * @param player The video player to make active
    * @param itemId Unique identifier for the item
    */
   setActivePlayer(player: VideoPlayer, itemId: string): void {
-    // If same player is already active, do nothing
+    // If same item is already active, do nothing
     if (this.activeItemId === itemId) {
       return;
     }
 
-    // Stop the previous player
+    // FIRST: Stop the previous player completely before doing anything else
     if (this.activePlayer && this.activePlayer !== player) {
+      const previousPlayer = this.activePlayer;
+
       try {
-        this.activePlayer.pause();
-        this.activePlayer.muted = true;
+        previousPlayer.muted = true;
+        previousPlayer.pause();
       } catch {
         // Silently handle - player may already be disposed
       }
     }
 
-    // Set new active player
+    // THEN: Set new active player
     this.activePlayer = player;
     this.activeItemId = itemId;
   }
