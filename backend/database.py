@@ -21,7 +21,7 @@ from backend.config import settings
 
 # Create SQLAlchemy engine with connection pooling
 engine = create_engine(
-    settings.database_url,
+    settings.get_database_url(),
     pool_pre_ping=True,  # Verify connections before using
     pool_size=10,
     max_overflow=20,

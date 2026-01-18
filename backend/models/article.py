@@ -40,7 +40,7 @@ class Article(Base):
     content = Column(Text, nullable=False)
     source = Column(String(200), nullable=False)
     timestamp = Column(DateTime, nullable=False)
-    category = Column(String(100), nullable=True, index=True)
+    category = Column(String(50), nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     
     # Relationship: One article can have many reels

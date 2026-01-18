@@ -27,10 +27,21 @@ class Settings(BaseSettings):
     """
     
     # Database Configuration
-    database_url: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://user:password@localhost:5432/brainrot_news_reels"
-    )
+    # Support legacy DATABASE_URL if provided
+    database_url: Optional[str] = None
+    
+    # Individual database connection components
+    db_user: str = "brainrot_user"
+    db_password: str = "password"
+    db_host: str = "localhost"
+    db_port: str = "5432"
+    db_name: str = "brainrot_news_reels"
+    
+    def get_database_url(self) -> str:
+        """Get database URL, constructing from components if DATABASE_URL not provided."""
+        if self.database_url:
+            return self.database_url
+        return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
     
     # NewsAPI Configuration
     newsapi_key: Optional[str] = os.getenv("NEWSAPI_KEY")
