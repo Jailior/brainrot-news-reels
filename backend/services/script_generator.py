@@ -71,7 +71,8 @@ class ScriptGenerator:
         prompt = "Generate a 'brainrot' style narration for the following article:\n" + \
                 f"\nTitle: {article_title}\n" + \
                 f"\nContent: {article_content}\n" + \
-                "Only output the narration in plain text, no other text."
+                "Only output the narration in plain text, no other text. Keep it under 1 minute for when it read aloud." + \
+                "Start with a attention grabbing hook"
 
         headers = get_json_headers()
         payload = {
