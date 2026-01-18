@@ -2,30 +2,19 @@
 Audio generator service for ElevenLabs API integration.
 
 This service generates audio from scripts using ElevenLabs text-to-speech API,
-saves the audio file temporarily, uploads it to S3, extracts word-level timestamps
-using Whisper, and saves captions to the database.
+saves the audio file temporarily, extracts word-level timestamps, and returns the timestamps.
 
 Interactions:
-- Reads script from Reel (via ScriptGenerator.get_script_by_reel_id)
 - Calls ElevenLabs API to generate audio
-- Saves MP3 to /tmp directory temporarily
-- Uses StorageService to upload audio to S3
-- Uses WhisperHelper to extract word timestamps
-- Saves captions to database using Caption model
-- Updates Reel.audio_url and Reel.status
+- Extracts word timestamps from audio
+- Saves MP3 to temporary directory
 """
 
-import requests
+import base64
 import os
-from pathlib import Path
-from typing import List, Dict, Optional
-from sqlalchemy.orm import Session
 
 from backend.config import settings
-from backend.models.reel import Reel, ReelStatus
-from backend.models.caption import Caption
-from backend.services.storage_service import StorageService
-from backend.utils.whisper_helper import WhisperHelper
+from elevenlabs.client import ElevenLabs 
 
 
 class AudioGenerator:
@@ -49,161 +38,151 @@ class AudioGenerator:
         Initializes WhisperHelper for transcription.
         """
         self.api_key = settings.elevenlabs_api_key
-        self.base_url = settings.elevenlabs_base_url
-        self.voice_id = settings.elevenlabs_voice_id
+        self.client = ElevenLabs(api_key=self.api_key)
         self.temp_dir = settings.temp_dir
-        self.storage_service = StorageService()
-        self.whisper_helper = WhisperHelper()
+
     
-    def generate_audio(self, script: str, output_path: str) -> None:
+    def generate_audio(self, script: str, output_path: str, voice_id: str):
         """
-        Generate audio file from script text using ElevenLabs API.
+        Generate audio file from script text using ElevenLabs API and returns response object.
         
         Args:
             script: Script text to convert to speech
             output_path: Local file path where MP3 should be saved
+            voice_id: ElevenLabs voice ID to use for audio generation
         
-        Raises:
-            requests.RequestException: If API call fails
-            ValueError: If API key is not configured
-            IOError: If file cannot be written
-        
-        Interactions:
-            - Called with script text from Reel
-            - Saves MP3 file to output_path (typically /tmp directory)
-            - File will be uploaded to S3 after generation
+        Returns:
+            AudioWithTimestampsResponse:
+                - audio_base_64: base64 encoded audio
+                - alignments: list of alignments
         """
-        # TODO: Implement ElevenLabs API call
-        # Use requests.post() to call ElevenLabs text-to-speech endpoint
-        # Include script text and voice_id in request
-        # Stream response and save to output_path as MP3
-        # Ensure output directory exists before writing
-        pass
+        try:
+            response = self.client.text_to_speech.convert_with_timestamps(
+                text=script,
+                voice_id=voice_id,
+            )
+        except Exception as e:
+            print("Error generating audio from ElevenLabs API: ", e)
+            return None
+        return response
     
-    def save_audio_to_temp(self, script: str, reel_id: int) -> str:
+
+    def get_word_timestamps(self, alignments, max_chars):
         """
-        Generate audio and save to temporary directory.
+        Groups words based on MAX_CHAR_TO_DISPLAY and maps groups to starting word timestamps.
         
         Args:
-            script: Script text to convert to speech
-            reel_id: ID of the reel (for filename)
+            alignments (dict): The alignment data from ElevenLabs API response containing:
+                - characters: list of individual characters
+                - character_start_times_seconds: list of start times for each character
+                - character_end_times_seconds: list of end times for each character
+            script (str): The original script text used to generate the audio
+            max_chars (int): Maximum characters to display per group (from settings.MAX_CHAR_TO_DISPLAY)
+        
+        Returns:
+            list: List of dictionaries with structure:
+                [
+                    {
+                        'text': 'grouped words',
+                        'start_time': float (seconds),
+                        'end_time': float (seconds)
+                    },
+                    ...
+                ]
+        """
+        if not alignments:
+            return []
+        
+        characters = alignments.characters
+        start_times = alignments.character_start_times_seconds
+        end_times = alignments.character_end_times_seconds
+        
+        # Reconstruct words from characters
+        words = []
+        current_word = []
+        word_start_idx = 0
+        
+        for i, char in enumerate(characters):
+            if char.isspace() or char in '.,!?;:—-':
+                if current_word:
+                    words.append({
+                        'text': ''.join(current_word),
+                        'start_idx': word_start_idx,
+                        'end_idx': i - 1,
+                        'start_time': start_times[word_start_idx],
+                        'end_time': end_times[i - 1]
+                    })
+                    current_word = []
+                # Include space/punctuation in the previous word's end time
+                if words and i < len(end_times):
+                    words[-1]['end_time'] = end_times[i]
+                    words[-1]['text'] += char
+            else:
+                if not current_word:
+                    word_start_idx = i
+                current_word.append(char)
+        
+        # Add the last word if exists
+        if current_word:
+            words.append({
+                'text': ''.join(current_word),
+                'start_idx': word_start_idx,
+                'end_idx': len(characters) - 1,
+                'start_time': start_times[word_start_idx],
+                'end_time': end_times[len(characters) - 1]
+            })
+        
+        # Group words by character limit
+        groups = []
+        current_group = []
+        current_length = 0
+        
+        for word in words:
+            word_text = word['text']
+            word_length = len(word_text)
+            
+            # Check if adding this word would exceed the limit
+            if current_group and (current_length + word_length > max_chars):
+                # Finalize current group
+                group_text = ''.join([w['text'] for w in current_group])
+                groups.append({
+                    'text': group_text.strip(),
+                    'start_time': current_group[0]['start_time'],
+                    'end_time': current_group[-1]['end_time']
+                })
+                # Start new group
+                current_group = [word]
+                current_length = word_length
+            else:
+                # Add word to current group
+                current_group.append(word)
+                current_length += word_length
+        
+        # Add the last group
+        if current_group:
+            group_text = ''.join([w['text'] for w in current_group])
+            groups.append({
+                'text': group_text.strip(),
+                'start_time': current_group[0]['start_time'],
+                'end_time': current_group[-1]['end_time']
+            })
+        
+        return groups
+
+    
+    def save_audio_to_temp(self, response, temp_id_name: str) -> str:
+        """
+        Save audio file from response object to temporary directory.
+        
+        Args:
+            response: response object from generate_audio()
+            temp_id_name: Name of the temporary file
         
         Returns:
             str: Path to the temporary audio file
-        
-        Interactions:
-            - Calls generate_audio() to create MP3
-            - Saves to /tmp directory with unique filename
-            - Returns path for upload_audio_to_s3()
         """
-        # TODO: Implement temporary file saving
-        # Create unique filename: f"audio_{reel_id}_{timestamp}.mp3"
-        # Construct full path in temp_dir
-        # Call generate_audio() with script and output path
-        # Return the file path
-        pass
-    
-    def upload_audio_to_s3(self, local_file_path: str, reel_id: int) -> str:
-        """
-        Upload audio file from temporary location to S3.
-        
-        Args:
-            local_file_path: Path to local MP3 file
-            reel_id: ID of the reel (for S3 key)
-        
-        Returns:
-            str: S3 URL of the uploaded audio file
-        
-        Interactions:
-            - Uses StorageService.upload_file() to upload to S3
-            - S3 key format: "audio/reel_{reel_id}.mp3"
-            - Returns URL to be saved in Reel.audio_url
-        """
-        # TODO: Implement S3 upload
-        # Construct S3 key: f"audio/reel_{reel_id}.mp3"
-        # Use self.storage_service.upload_file() with content_type='audio/mpeg'
-        # Return the S3 URL
-        pass
-    
-    def get_word_timestamps(self, audio_file_path: str) -> List[Dict]:
-        """
-        Extract word-level timestamps from audio using Whisper.
-        
-        Args:
-            audio_file_path: Path to audio file (local or S3 URL)
-        
-        Returns:
-            List[Dict]: List of word dictionaries with:
-                - word: Word text
-                - start: Start time in seconds
-                - end: End time in seconds
-        
-        Interactions:
-            - Uses WhisperHelper to transcribe audio with word timestamps
-            - Returns data that will be saved as Caption records
-        """
-        # TODO: Implement Whisper transcription
-        # If audio_file_path is S3 URL, download to temp first
-        # Use self.whisper_helper.transcribe_with_timestamps()
-        # Return list of word dictionaries with timing information
-        pass
-    
-    def save_captions(self, reel_id: int, word_timestamps: List[Dict], db: Session) -> List[Caption]:
-        """
-        Save word timestamps as Caption records in database.
-        
-        Args:
-            reel_id: ID of the reel these captions belong to
-            word_timestamps: List of word dictionaries from get_word_timestamps()
-            db: Database session
-        
-        Returns:
-            List[Caption]: List of created Caption model instances
-        
-        Interactions:
-            - Creates Caption records linked to Reel
-            - Sets sequence_order based on timestamp order
-            - Used by VideoCompositor to generate SRT subtitle files
-        """
-        # TODO: Implement caption saving
-        # Create Caption instances from word_timestamps
-        # Set sequence_order based on start_time
-        # Use db.add_all() and db.commit() to save
-        # Return list of created Caption objects
-        pass
-    
-    def process_reel_audio(self, reel_id: int, db: Session) -> Reel:
-        """
-        Complete audio generation pipeline for a reel.
-        
-        This method orchestrates the full audio generation process:
-        1. Get script from database
-        2. Generate audio and save to temp
-        3. Upload to S3
-        4. Extract word timestamps
-        5. Save captions
-        6. Update reel status and audio_url
-        
-        Args:
-            reel_id: ID of the reel to process
-            db: Database session
-        
-        Returns:
-            Reel: Updated Reel instance with audio_url set
-        
-        Interactions:
-            - Orchestrates all audio generation steps
-            - Updates Reel.status to AUDIO_GENERATED
-            - Updates Reel.audio_url with S3 URL
-        """
-        # TODO: Implement full audio pipeline
-        # Get Reel from database
-        # Get script text from Reel.script
-        # Call save_audio_to_temp() to generate and save audio
-        # Call upload_audio_to_s3() to upload
-        # Call get_word_timestamps() to extract timing
-        # Call save_captions() to persist captions
-        # Update Reel.audio_url and Reel.status = ReelStatus.AUDIO_GENERATED
-        # Commit changes and return updated Reel
-        pass
-
+        audio_base64 = response.audio_base_64
+        audio_path = os.path.join(self.temp_dir, f"{temp_id_name}.mp3")
+        with open(audio_path, "wb") as f:
+            f.write(base64.b64decode(audio_base64))
+        return audio_path
