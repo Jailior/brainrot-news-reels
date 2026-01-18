@@ -35,6 +35,7 @@ dependencies = [
     "openai-whisper>=20231117",
     "elevenlabs>=0.2.26",
     "python-multipart>=0.0.6",
+    "trafilatura>=1.6.0",
 ]
 
 [project.optional-dependencies]
