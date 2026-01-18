@@ -15,10 +15,14 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const { signUp, isLoading, error, clearError } = useAuth();
 
-  const textColor = useThemeColor({}, 'text');
-  const borderColor = useThemeColor({}, 'icon');
   const buttonBackground = useThemeColor({}, 'tint');
   const iconColor = useThemeColor({}, 'icon');
+  const errorBoxBackground = useThemeColor({ light: '#ffebee', dark: '#2a1f1f' }, 'background');
+  const errorTextColor = useThemeColor({ light: '#d32f2f', dark: '#ff6b6b' }, 'text');
+  const inputBackground = useThemeColor({}, 'inputBackground');
+  const inputBorder = useThemeColor({}, 'inputBorder');
+  const inputText = useThemeColor({}, 'inputText');
+  const placeholderColor = useThemeColor({}, 'placeholder');
 
   const handleSignUp = async () => {
     if (name && email && password) {
@@ -52,8 +56,13 @@ export default function SignUpScreen() {
 
         {/* Error Box */}
         {error && (
-          <View style={styles.errorBox}>
-            <ThemedText style={styles.errorText}>{error}</ThemedText>
+          <View
+            style={[
+              styles.errorBox,
+              { backgroundColor: errorBoxBackground, borderColor: '#ff4444' },
+            ]}
+          >
+            <ThemedText style={[styles.errorText, { color: errorTextColor }]}>{error}</ThemedText>
           </View>
         )}
 
@@ -61,20 +70,28 @@ export default function SignUpScreen() {
           <TextInput
             style={[
               styles.input,
-              { color: textColor, borderColor: error ? '#ff4444' : borderColor + '40' },
+              {
+                color: inputText,
+                borderColor: error ? '#ff4444' : inputBorder,
+                backgroundColor: inputBackground,
+              },
             ]}
             placeholder="Full Name"
-            placeholderTextColor={borderColor}
+            placeholderTextColor={placeholderColor}
             value={name}
             onChangeText={handleInputChange(setName)}
           />
           <TextInput
             style={[
               styles.input,
-              { color: textColor, borderColor: error ? '#ff4444' : borderColor + '40' },
+              {
+                color: inputText,
+                borderColor: error ? '#ff4444' : inputBorder,
+                backgroundColor: inputBackground,
+              },
             ]}
             placeholder="Email"
-            placeholderTextColor={borderColor}
+            placeholderTextColor={placeholderColor}
             value={email}
             onChangeText={handleInputChange(setEmail)}
             autoCapitalize="none"
@@ -85,10 +102,14 @@ export default function SignUpScreen() {
               style={[
                 styles.input,
                 styles.passwordInput,
-                { color: textColor, borderColor: error ? '#ff4444' : borderColor + '40' },
+                {
+                  color: inputText,
+                  borderColor: error ? '#ff4444' : inputBorder,
+                  backgroundColor: inputBackground,
+                },
               ]}
               placeholder="Password"
-              placeholderTextColor={borderColor}
+              placeholderTextColor={placeholderColor}
               value={password}
               onChangeText={handleInputChange(setPassword)}
               secureTextEntry={!showPassword}
@@ -152,15 +173,12 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   errorBox: {
-    backgroundColor: '#ffebee',
-    borderColor: '#ff4444',
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
   },
   errorText: {
-    color: '#d32f2f',
     fontSize: 14,
     textAlign: 'center',
   },

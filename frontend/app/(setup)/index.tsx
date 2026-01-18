@@ -17,7 +17,9 @@ export default function SetupScreen() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('English');
 
   const buttonBackground = useThemeColor({}, 'tint');
-  const cardBackground = useThemeColor({ light: '#f5f5f5', dark: '#1c1c1e' }, 'background');
+  const inputBackground = useThemeColor({}, 'inputBackground');
+  const inputBorder = useThemeColor({}, 'inputBorder');
+  const inputText = useThemeColor({}, 'inputText');
   const textColor = useThemeColor({}, 'text');
 
   const toggleCategory = (category: string) => {
@@ -65,14 +67,16 @@ export default function SetupScreen() {
                   {
                     backgroundColor: selectedCategories.includes(category)
                       ? buttonBackground
-                      : cardBackground,
+                      : inputBackground,
+                    borderWidth: selectedCategories.includes(category) ? 0 : 1,
+                    borderColor: inputBorder,
                   },
                 ]}
               >
                 <ThemedText
                   style={[
                     styles.chipText,
-                    { color: selectedCategories.includes(category) ? '#fff' : textColor },
+                    { color: selectedCategories.includes(category) ? '#fff' : inputText },
                   ]}
                 >
                   {category}
@@ -94,13 +98,13 @@ export default function SetupScreen() {
                 style={[
                   styles.styleCard,
                   {
-                    backgroundColor: cardBackground,
-                    borderColor: selectedLanguage === language ? buttonBackground : 'transparent',
+                    backgroundColor: inputBackground,
+                    borderColor: selectedLanguage === language ? buttonBackground : inputBorder,
                     borderWidth: 2,
                   },
                 ]}
               >
-                <ThemedText style={styles.styleText}>{language}</ThemedText>
+                <ThemedText style={[styles.styleText, { color: inputText }]}>{language}</ThemedText>
                 {selectedLanguage === language && (
                   <IconSymbol name="checkmark.circle.fill" size={20} color={buttonBackground} />
                 )}

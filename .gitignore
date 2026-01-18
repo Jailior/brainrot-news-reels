@@ -9,3 +9,9 @@ backend/__pycache__/**
 
 tmp/
 test_db.py
+
+# Video files
+demo_assets/*.mp4
+*.mp4
+*.mov
+*.avi

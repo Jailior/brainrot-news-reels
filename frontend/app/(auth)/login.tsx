@@ -14,10 +14,14 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const { signIn, isLoading, error, clearError } = useAuth();
 
-  const textColor = useThemeColor({}, 'text');
-  const borderColor = useThemeColor({}, 'icon');
   const buttonBackground = useThemeColor({}, 'tint');
   const iconColor = useThemeColor({}, 'icon');
+  const errorBackground = useThemeColor({ light: '#fff5f5', dark: '#2a1f1f' }, 'background');
+  const errorTextColor = useThemeColor({ light: '#ff4444', dark: '#ff6b6b' }, 'text');
+  const inputBackground = useThemeColor({}, 'inputBackground');
+  const inputBorder = useThemeColor({}, 'inputBorder');
+  const inputText = useThemeColor({}, 'inputText');
+  const placeholderColor = useThemeColor({}, 'placeholder');
 
   const handleLogin = async () => {
     if (email && password) {
@@ -49,21 +53,25 @@ export default function LoginScreen() {
         <ThemedText style={styles.subtitle}>Sign in to continue</ThemedText>
 
         {/* Error Text */}
-        {error && <ThemedText style={styles.errorText}>Invalid email or password</ThemedText>}
+        {error && (
+          <ThemedText style={[styles.errorText, { color: errorTextColor }]}>
+            Invalid email or password
+          </ThemedText>
+        )}
 
         <View style={styles.form}>
           <TextInput
             style={[
               styles.input,
               {
-                color: textColor,
-                borderColor: error ? '#ff4444' : borderColor + '40',
+                color: inputText,
+                borderColor: error ? '#ff4444' : inputBorder,
                 borderWidth: error ? 2 : 1,
-                backgroundColor: error ? '#fff5f5' : 'transparent',
+                backgroundColor: error ? errorBackground : inputBackground,
               },
             ]}
             placeholder="Email"
-            placeholderTextColor={borderColor}
+            placeholderTextColor={placeholderColor}
             value={email}
             onChangeText={handleInputChange(setEmail)}
             autoCapitalize="none"
@@ -75,14 +83,14 @@ export default function LoginScreen() {
                 styles.input,
                 styles.passwordInput,
                 {
-                  color: textColor,
-                  borderColor: error ? '#ff4444' : borderColor + '40',
+                  color: inputText,
+                  borderColor: error ? '#ff4444' : inputBorder,
                   borderWidth: error ? 2 : 1,
-                  backgroundColor: error ? '#fff5f5' : 'transparent',
+                  backgroundColor: error ? errorBackground : inputBackground,
                 },
               ]}
               placeholder="Password"
-              placeholderTextColor={borderColor}
+              placeholderTextColor={placeholderColor}
               value={password}
               onChangeText={handleInputChange(setPassword)}
               secureTextEntry={!showPassword}
@@ -145,7 +153,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   errorText: {
-    color: '#ff4444',
     fontSize: 14,
     marginBottom: 16,
   },
