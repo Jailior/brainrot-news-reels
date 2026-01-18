@@ -62,7 +62,7 @@ class NewsFetcher:
         self,
         country: Optional[str] = None,
         category: Optional[str] = None,
-        page_size: int = 100,
+        page_size: int = 1,
         extract_content: bool = True,
         delay_between_extractions: float = 0.5,
     ) -> List[Dict]:
@@ -123,7 +123,7 @@ class NewsFetcher:
         else:
             endpoint = f"{self.base_url}/everything"
             params = {
-                "q": "news OR article OR story OR the",
+                "q": "news",
                 "pageSize": page_size,
                 "language": "en",
                 "sortBy": "publishedAt"
@@ -208,7 +208,7 @@ class NewsFetcher:
         Returns:
             str: Unique identifier (title + separator + source)
         """
-        return f"{title}||{source}"
+        return f"{title}__{source}"
     
     def _extract_full_content(self, url: str, fallback_content: str = "", timeout: int = 10) -> str:
         """
