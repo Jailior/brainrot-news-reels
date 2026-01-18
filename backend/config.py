@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     database_url: Optional[str] = None
     
     # Individual database connection components
-    db_user: str = "brainrot_user"
-    db_password: str = "password"
+    db_user: str = "dev_user"
+    db_password: str = "dev_pw"
     db_host: str = "localhost"
     db_port: str = "5432"
     db_name: str = "brainrot_news_reels"
