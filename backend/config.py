@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     debug: bool = os.getenv("DEBUG", "False").lower() == "true"
     
     # Temporary File Settings
-    temp_dir: str = os.getenv("TEMP_DIR", "/tmp")
+    temp_dir: str = os.getenv("TEMP_DIR", "./tmp/")
     
     # API Settings
     api_prefix: str = "/api"

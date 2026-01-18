@@ -42,13 +42,12 @@ class AudioGenerator:
         self.temp_dir = settings.temp_dir
 
     
-    def generate_audio(self, script: str, output_path: str, voice_id: str):
+    def generate_audio(self, script: str, voice_id: str):
         """
         Generate audio file from script text using ElevenLabs API and returns response object.
         
         Args:
             script: Script text to convert to speech
-            output_path: Local file path where MP3 should be saved
             voice_id: ElevenLabs voice ID to use for audio generation
         
         Returns:
