@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Dimensions, Pressable, StyleSheet } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -50,6 +51,18 @@ export const ReelItem = React.memo(({ item, isActive }: ReelItemProps) => {
         nativeControls={false}
         allowsFullscreen={false}
       />
+      {/* Right side action icons */}
+      <View style={styles.iconContainer}>
+        <Pressable style={styles.iconButton}>
+          <Ionicons name="heart-outline" size={32} color="#fff" />
+        </Pressable>
+        <Pressable style={styles.iconButton}>
+          <Ionicons name="chatbubble-outline" size={30} color="#fff" />
+        </Pressable>
+        <Pressable style={styles.iconButton}>
+          <Ionicons name="share-outline" size={30} color="#fff" />
+        </Pressable>
+      </View>
     </Pressable>
   );
 });
@@ -61,5 +74,21 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
     backgroundColor: '#000',
+  },
+  iconContainer: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    transform: [{ translateY: -80 }],
+    alignItems: 'center',
+    gap: 20,
+  },
+  iconButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
