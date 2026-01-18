@@ -172,7 +172,7 @@ class VideoCompositor:
             '-y',
             '-i', background_video_path,
             '-i', audio_path,
-            '-vf', f"subtitles={srt_path}:force_style='{style}'",
+            '-vf', f"scale=iw*3:ih*3,subtitles={srt_path}:force_style='{style}'",
             # Ensure we use background video + narration audio (not background audio)
             '-map', '0:v:0',
             '-map', '1:a:0',
