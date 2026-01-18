@@ -10,7 +10,7 @@ Interactions:
 - Read by ScriptGenerator service to generate scripts
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, func
+from sqlalchemy import Column, Integer, String, Text, DateTime, func, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship
 from typing import List, Optional
 
@@ -23,24 +23,31 @@ class Article(Base):
     
     Attributes:
         id: Primary key, auto-incrementing integer
+        unique_id: Unique identifier combining title and source (for deduplication)
         title: Article headline/title
         content: Full article text content
         source: News source name (e.g., "BBC News", "CNN")
         timestamp: Original publication timestamp from NewsAPI
         category: Article category/topic (e.g., "technology", "sports")
+        visited: Whether this article has been processed by the pipeline
         created_at: Timestamp when article was saved to database
         reels: Relationship to Reel objects generated from this article
     """
     
     __tablename__ = "articles"
     __allow_unmapped__ = True
+    __table_args__ = (
+        UniqueConstraint('unique_id', name='uq_article_unique_id'),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
+    unique_id = Column(String(700), nullable=False, unique=True, index=True)  # title + source (max 500 + 200)
     title = Column(String(500), nullable=False, index=True)
     content = Column(Text, nullable=False)
     source = Column(String(200), nullable=False)
     timestamp = Column(DateTime, nullable=False)
     category = Column(String(100), nullable=True, index=True)
+    visited = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     
     # Relationship: One article can have many reels
