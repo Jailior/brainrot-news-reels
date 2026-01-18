@@ -81,6 +81,38 @@ export interface SetupRequest {
   };
 }
 
+// Reel types
+export interface Reel {
+  id: number;
+  video_url: string | null;
+  script: string | null;
+  views: number;
+  created_at: string;
+}
+
+export interface ReelListResponse {
+  reels: Reel[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ReelDetailResponse {
+  id: number;
+  video_url: string | null;
+  audio_url: string | null;
+  script: string | null;
+  views: number;
+  status: string;
+  article_title: string | null;
+  created_at: string;
+}
+
+export interface ViewIncrementResponse {
+  reel_id: number;
+  views: number;
+}
+
 // API Error class
 export class ApiError extends Error {
   constructor(
@@ -213,6 +245,36 @@ export async function deleteAccount(data: DeleteAccountRequest): Promise<void> {
     body: JSON.stringify(data),
   });
   await clearUserId();
+}
+
+// Reel API functions
+export async function fetchReels(
+  limit: number = 10,
+  offset: number = 0,
+  userId?: number | null
+): Promise<ReelListResponse> {
+  const params = new URLSearchParams({
+    limit: limit.toString(),
+    offset: offset.toString(),
+  });
+  if (userId) {
+    params.append('user_id', userId.toString());
+  }
+  return request<ReelListResponse>(`/reels?${params.toString()}`);
+}
+
+export async function fetchReelDetail(reelId: number): Promise<ReelDetailResponse> {
+  return request<ReelDetailResponse>(`/reels/${reelId}`);
+}
+
+export async function incrementViewCount(
+  reelId: number,
+  userId?: number | null
+): Promise<ViewIncrementResponse> {
+  const params = userId ? `?user_id=${userId}` : '';
+  return request<ViewIncrementResponse>(`/reels/${reelId}/view${params}`, {
+    method: 'POST',
+  });
 }
 
 // Guest user credentials

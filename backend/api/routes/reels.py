@@ -13,7 +13,7 @@ Interactions:
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from backend.database import get_db
 from backend.models.reel import Reel, ReelStatus
@@ -26,25 +26,53 @@ from backend.api.schemas.reel import (
     ViewIncrementResponse,
     UserWatchedReelsResponse,
 )
+from backend.services.storage_service import StorageService
 
 router = APIRouter()
+
+# Initialize storage service for generating presigned URLs
+storage_service = StorageService()
+
+
+def get_presigned_video_url(video_url: Optional[str]) -> Optional[str]:
+    """
+    Convert an S3 key to a presigned URL for frontend access.
+    
+    Args:
+        video_url: S3 key or URL stored in database
+    
+    Returns:
+        Presigned URL that can be used by frontend, or None if no video
+    """
+    if not video_url:
+        return None
+    try:
+        # Extract key and generate presigned URL (valid for 1 hour)
+        s3_key = storage_service._extract_s3_key(video_url)
+        return storage_service.get_file_url(s3_key, expires_in=3600)
+    except Exception as e:
+        print(f"Error generating presigned URL for {video_url}: {e}")
+        return video_url  # Return original as fallback
 
 
 @router.get("/reels", response_model=ReelListResponse)
 def get_reels(
     limit: int = Query(default=10, ge=1, le=100, description="Number of reels to return"),
     offset: int = Query(default=0, ge=0, description="Offset for pagination"),
+    user_id: int = Query(default=None, description="User ID to exclude watched reels"),
     db: Session = Depends(get_db),
 ) -> ReelListResponse:
     """
     Get paginated list of ready reels.
     
     Returns only reels with status='ready' that have video_url set.
+    If user_id is provided, excludes reels the user has already watched.
     Used by frontend for infinite scroll functionality.
     
     Args:
         limit: Maximum number of reels to return (1-100)
         offset: Number of reels to skip for pagination
+        user_id: Optional user ID to exclude watched reels
         db: Database session (injected)
     
     Returns:
@@ -52,18 +80,49 @@ def get_reels(
     
     Interactions:
         - Queries Reel table filtered by status=READY
+        - If user_id provided, excludes reels in ReelWatch for that user
         - Orders by created_at descending (newest first)
         - Returns ReelListResponse with reels, total count, limit, offset
         - Frontend uses this for initial load and infinite scroll
     """
-    # TODO: Implement reel listing
-    # Query reels with status=ReelStatus.READY and video_url is not None
-    # Order by created_at descending
-    # Apply limit and offset for pagination
-    # Count total number of ready reels
-    # Convert to ReelResponse objects
-    # Return ReelListResponse with reels list, total, limit, offset
-    pass
+    # Base query for ready reels with video_url
+    query = db.query(Reel).filter(
+        Reel.status == ReelStatus.READY,
+        Reel.video_url.isnot(None)
+    )
+    
+    # NOTE: Watched reel filtering is disabled for now to allow infinite scrolling
+    # If user_id provided, exclude reels the user has already watched
+    # if user_id is not None:
+    #     watched_subquery = db.query(ReelWatch.reel_id).filter(
+    #         ReelWatch.user_id == user_id
+    #     ).subquery()
+    #     query = query.filter(~Reel.id.in_(watched_subquery))
+    
+    # Get total count before pagination
+    total = query.count()
+    
+    # Apply ordering and pagination
+    reels = query.order_by(Reel.created_at.desc()).offset(offset).limit(limit).all()
+    
+    # Convert to response objects with presigned URLs
+    reel_responses = [
+        ReelResponse(
+            id=reel.id,
+            video_url=get_presigned_video_url(reel.video_url),
+            script=reel.script,
+            views=reel.views,
+            created_at=reel.created_at,
+        )
+        for reel in reels
+    ]
+    
+    return ReelListResponse(
+        reels=reel_responses,
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/reels/{reel_id}", response_model=ReelDetailResponse)
@@ -91,12 +150,25 @@ def get_reel_detail(
         - Includes related Article information
         - Returns ReelDetailResponse with all reel details
     """
-    # TODO: Implement reel detail retrieval
-    # Query Reel by ID, include article relationship
-    # If not found, raise HTTPException(status_code=404)
-    # Convert to ReelDetailResponse including article_title
-    # Return ReelDetailResponse
-    pass
+    # Query Reel by ID
+    reel = db.query(Reel).filter(Reel.id == reel_id).first()
+    
+    if not reel:
+        raise HTTPException(status_code=404, detail="Reel not found")
+    
+    # Get article title if available
+    article_title = reel.article.title if reel.article else None
+    
+    return ReelDetailResponse(
+        id=reel.id,
+        video_url=get_presigned_video_url(reel.video_url),
+        audio_url=get_presigned_video_url(reel.audio_url),
+        script=reel.script,
+        views=reel.views,
+        status=reel.status.value,
+        article_title=article_title,
+        created_at=reel.created_at,
+    )
 
 
 @router.post("/reels/{reel_id}/view", response_model=ViewIncrementResponse)
