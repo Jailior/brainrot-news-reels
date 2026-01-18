@@ -122,7 +122,10 @@ class VideoCompositor:
             milliseconds = int((time * 1000) % 1000)
             return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
 
-        with open(output_path, 'w') as f:
+        # Write as UTF-8 so FFmpeg can decode “smart quotes”, em-dashes, etc.
+        # (Windows default encodings like cp1252 will trigger "Invalid UTF-8" and
+        # can cause subtitles to stop rendering after the first few cues.)
+        with open(output_path, 'w', encoding='utf-8', newline='\n') as f:
             for seq_order,caption in enumerate(captions):
                 f.write(f"{seq_order + 1}\n{format_time(caption['start_time'])} --> {format_time(caption['end_time'])}\n{caption['text']}\n\n")
     
@@ -165,14 +168,18 @@ class VideoCompositor:
         # Handle errors and validate input files exist
         subprocess.run([
             'ffmpeg',
+            '-y',
             '-i', background_video_path,
             '-i', audio_path,
             '-vf', f'subtitles={srt_path}',
+            # Ensure we use background video + narration audio (not background audio)
+            '-map', '0:v:0',
+            '-map', '1:a:0',
             '-shortest',
             '-c:v', 'libx264',
             '-c:a', 'aac',
             output_video_path
-        ])
+        ], check=True)
     
 
     def upload_video_to_s3(self, local_file_path: str, reel_id: int) -> str:

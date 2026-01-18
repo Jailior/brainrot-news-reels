@@ -88,4 +88,3 @@ load_dotenv()
 
 # Global settings instance
 settings = Settings()
-
