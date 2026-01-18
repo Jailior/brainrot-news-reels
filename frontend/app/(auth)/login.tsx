@@ -1,52 +1,96 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signIn, isLoading } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const { signIn, isLoading, error, clearError } = useAuth();
 
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'icon');
   const buttonBackground = useThemeColor({}, 'tint');
+  const iconColor = useThemeColor({}, 'icon');
 
   const handleLogin = async () => {
     if (email && password) {
-      await signIn(email, password);
+      try {
+        await signIn(email, password);
+      } catch {
+        // Error is handled by auth context and displayed below
+      }
     }
+  };
+
+  const handleInputChange = (setter: (value: string) => void) => (value: string) => {
+    // Clear error when user starts typing
+    if (error) {
+      clearError();
+    }
+    setter(value);
   };
 
   return (
     <ThemedView style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(auth)/signup')}>
+        <IconSymbol name="chevron.left" size={28} color={iconColor} />
+      </TouchableOpacity>
       <View style={styles.content}>
         <ThemedText type="title" style={styles.title}>
           Welcome Back
         </ThemedText>
         <ThemedText style={styles.subtitle}>Sign in to continue</ThemedText>
 
+        {/* Error Text */}
+        {error && <ThemedText style={styles.errorText}>Invalid email or password</ThemedText>}
+
         <View style={styles.form}>
           <TextInput
-            style={[styles.input, { color: textColor, borderColor: borderColor + '40' }]}
+            style={[
+              styles.input,
+              {
+                color: textColor,
+                borderColor: error ? '#ff4444' : borderColor + '40',
+                borderWidth: error ? 2 : 1,
+                backgroundColor: error ? '#fff5f5' : 'transparent',
+              },
+            ]}
             placeholder="Email"
             placeholderTextColor={borderColor}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={handleInputChange(setEmail)}
             autoCapitalize="none"
             keyboardType="email-address"
           />
-          <TextInput
-            style={[styles.input, { color: textColor, borderColor: borderColor + '40' }]}
-            placeholder="Password"
-            placeholderTextColor={borderColor}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[
+                styles.input,
+                styles.passwordInput,
+                {
+                  color: textColor,
+                  borderColor: error ? '#ff4444' : borderColor + '40',
+                  borderWidth: error ? 2 : 1,
+                  backgroundColor: error ? '#fff5f5' : 'transparent',
+                },
+              ]}
+              placeholder="Password"
+              placeholderTextColor={borderColor}
+              value={password}
+              onChangeText={handleInputChange(setPassword)}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+              <IconSymbol name={showPassword ? 'eye.slash' : 'eye'} size={20} color={iconColor} />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
             style={[styles.button, { backgroundColor: buttonBackground }]}
@@ -80,6 +124,16 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 12,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
   content: {
     width: '100%',
   },
@@ -90,6 +144,11 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     opacity: 0.6,
   },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 14,
+    marginBottom: 16,
+  },
   form: {
     gap: 16,
   },
@@ -99,6 +158,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    top: 18,
+    padding: 4,
   },
   button: {
     height: 56,

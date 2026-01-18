@@ -8,13 +8,13 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 const CATEGORIES = ['Business', 'Entertainment', 'Health', 'Science', 'Sports', 'Technology'];
-const VIDEO_STYLES = ['Minecraft Parkour', 'Subway Surfers', 'Satisfying Slime', 'Hydraulic Press'];
+const LANGUAGES = ['English', 'French', 'Spanish'];
 
 export default function SetupScreen() {
   const router = useRouter();
   const { user, completeSetup, setPreferences, isLoading } = useAuth();
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedStyle, setSelectedStyle] = useState<string>('');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('English');
 
   const buttonBackground = useThemeColor({}, 'tint');
   const cardBackground = useThemeColor({ light: '#f5f5f5', dark: '#1c1c1e' }, 'background');
@@ -27,10 +27,10 @@ export default function SetupScreen() {
   };
 
   const handleComplete = async () => {
-    if (selectedCategories.length > 0 && selectedStyle) {
+    if (selectedCategories.length > 0 && selectedLanguage) {
       const preferences = {
         categories: selectedCategories,
-        videoStyle: selectedStyle,
+        language: selectedLanguage,
       };
 
       if (user) {
@@ -84,24 +84,24 @@ export default function SetupScreen() {
 
         <View style={styles.section}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Pick your brainrot background
+            Choose your language
           </ThemedText>
           <View style={styles.styleContainer}>
-            {VIDEO_STYLES.map((style) => (
+            {LANGUAGES.map((language) => (
               <TouchableOpacity
-                key={style}
-                onPress={() => setSelectedStyle(style)}
+                key={language}
+                onPress={() => setSelectedLanguage(language)}
                 style={[
                   styles.styleCard,
                   {
                     backgroundColor: cardBackground,
-                    borderColor: selectedStyle === style ? buttonBackground : 'transparent',
+                    borderColor: selectedLanguage === language ? buttonBackground : 'transparent',
                     borderWidth: 2,
                   },
                 ]}
               >
-                <ThemedText style={styles.styleText}>{style}</ThemedText>
-                {selectedStyle === style && (
+                <ThemedText style={styles.styleText}>{language}</ThemedText>
+                {selectedLanguage === language && (
                   <IconSymbol name="checkmark.circle.fill" size={20} color={buttonBackground} />
                 )}
               </TouchableOpacity>
@@ -114,11 +114,11 @@ export default function SetupScreen() {
             styles.finishButton,
             {
               backgroundColor: buttonBackground,
-              opacity: selectedCategories.length > 0 && selectedStyle ? 1 : 0.5,
+              opacity: selectedCategories.length > 0 && selectedLanguage ? 1 : 0.5,
             },
           ]}
           onPress={handleComplete}
-          disabled={isLoading || !(selectedCategories.length > 0 && selectedStyle)}
+          disabled={isLoading || !(selectedCategories.length > 0 && selectedLanguage)}
         >
           <ThemedText style={styles.finishButtonText}>
             {isLoading ? 'Saving...' : 'Start Watching'}
