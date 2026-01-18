@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     
     # Claude API Configuration
     open_router_api_key: Optional[str] = os.getenv("OPEN_ROUTER_API_KEY")
-    openrouter_base_url: str = os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1")
+    openrouter_base_url: str = os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1/chat/completions")
     openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-5.2")
     
     # ElevenLabs API Configuration
