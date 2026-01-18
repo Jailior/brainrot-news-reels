@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     newsapi_base_url: str = os.getenv("NEWSAPI_BASE_URL", "https://newsapi.org/v2")
     
     # Claude API Configuration
-    claude_api_key: Optional[str] = os.getenv("CLAUDE_API_KEY")
-    claude_base_url: str = os.getenv("CLAUDE_BASE_URL", "https://api.anthropic.com")
-    claude_model: str = os.getenv("CLAUDE_MODEL", "claude-3-sonnet-20240229")
+    open_router_api_key: Optional[str] = os.getenv("LLM_API_KEY")
+    openrouter_base_url: Optional[str] = os.getenv("OPENROUTER_URL")
+    openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-5.2")
     
     # ElevenLabs API Configuration
     elevenlabs_api_key: Optional[str] = os.getenv("ELEVENLABS_API_KEY")
@@ -80,6 +80,9 @@ class Settings(BaseSettings):
         """Pydantic configuration."""
         env_file = ".env"
         case_sensitive = False
+    
+    # Global constants
+    MAX_CHAR_TO_DISPLAY: int = 100
 
 load_dotenv()
 
