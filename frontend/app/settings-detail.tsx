@@ -48,13 +48,20 @@ export default function SettingsDetailScreen() {
     }
   }, [user?.name, user?.preferences?.language]);
 
-  const textColor = useThemeColor({}, 'text');
-  const borderColor = useThemeColor({}, 'icon');
   const buttonBackground = useThemeColor({}, 'tint');
   const secondaryBackgroundColor = useThemeColor(
     { light: '#f5f5f5', dark: '#1c1c1e' },
     'background'
   );
+  const modalCancelBackground = useThemeColor(
+    { light: 'rgba(128, 128, 128, 0.2)', dark: 'rgba(128, 128, 128, 0.3)' },
+    'background'
+  );
+  const errorTextColor = useThemeColor({ light: '#ff4444', dark: '#ff6b6b' }, 'text');
+  const inputBackground = useThemeColor({}, 'inputBackground');
+  const inputBorder = useThemeColor({}, 'inputBorder');
+  const inputText = useThemeColor({}, 'inputText');
+  const placeholderColor = useThemeColor({}, 'placeholder');
 
   const handleInputChange = (setter: (value: string) => void) => (value: string) => {
     if (error) {
@@ -103,7 +110,7 @@ export default function SettingsDetailScreen() {
       setConfirmPassword('');
 
       Alert.alert('Success', 'Profile updated successfully');
-    } catch (err) {
+    } catch {
       // Error is handled by auth context
     }
   };
@@ -119,7 +126,7 @@ export default function SettingsDetailScreen() {
       setShowDeleteModal(false);
       setDeleteConfirmText('');
       // Navigation will be handled by auth context (user will be logged out)
-    } catch (err) {
+    } catch {
       // Error is handled by auth context
     }
   };
@@ -139,9 +146,7 @@ export default function SettingsDetailScreen() {
           </ThemedText>
 
           {error && (
-            <ThemedText style={styles.errorText}>
-              {error}
-            </ThemedText>
+            <ThemedText style={[styles.errorText, { color: errorTextColor }]}>{error}</ThemedText>
           )}
 
           <View style={styles.form}>
@@ -150,13 +155,13 @@ export default function SettingsDetailScreen() {
               style={[
                 styles.input,
                 {
-                  color: textColor,
-                  borderColor: borderColor + '40',
-                  backgroundColor: secondaryBackgroundColor,
+                  color: inputText,
+                  borderColor: inputBorder,
+                  backgroundColor: inputBackground,
                 },
               ]}
               placeholder="Enter your name"
-              placeholderTextColor={borderColor + '80'}
+              placeholderTextColor={placeholderColor}
               value={name}
               onChangeText={handleInputChange(setName)}
             />
@@ -184,22 +189,20 @@ export default function SettingsDetailScreen() {
               ))}
             </View>
 
-            <ThemedText style={[styles.label, styles.sectionSpacing]}>
-              Change Password
-            </ThemedText>
+            <ThemedText style={[styles.label, styles.sectionSpacing]}>Change Password</ThemedText>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={[
                   styles.input,
                   styles.passwordInput,
                   {
-                    color: textColor,
-                    borderColor: borderColor + '40',
-                    backgroundColor: secondaryBackgroundColor,
+                    color: inputText,
+                    borderColor: inputBorder,
+                    backgroundColor: inputBackground,
                   },
                 ]}
                 placeholder="Current password"
-                placeholderTextColor={borderColor + '80'}
+                placeholderTextColor={placeholderColor}
                 value={currentPassword}
                 onChangeText={handleInputChange(setCurrentPassword)}
                 secureTextEntry={!showCurrentPassword}
@@ -221,13 +224,13 @@ export default function SettingsDetailScreen() {
                   styles.input,
                   styles.passwordInput,
                   {
-                    color: textColor,
-                    borderColor: borderColor + '40',
-                    backgroundColor: secondaryBackgroundColor,
+                    color: inputText,
+                    borderColor: inputBorder,
+                    backgroundColor: inputBackground,
                   },
                 ]}
                 placeholder="New password"
-                placeholderTextColor={borderColor + '80'}
+                placeholderTextColor={placeholderColor}
                 value={newPassword}
                 onChangeText={handleInputChange(setNewPassword)}
                 secureTextEntry={!showNewPassword}
@@ -249,13 +252,13 @@ export default function SettingsDetailScreen() {
                   styles.input,
                   styles.passwordInput,
                   {
-                    color: textColor,
-                    borderColor: borderColor + '40',
-                    backgroundColor: secondaryBackgroundColor,
+                    color: inputText,
+                    borderColor: inputBorder,
+                    backgroundColor: inputBackground,
                   },
                 ]}
                 placeholder="Confirm new password"
-                placeholderTextColor={borderColor + '80'}
+                placeholderTextColor={placeholderColor}
                 value={confirmPassword}
                 onChangeText={handleInputChange(setConfirmPassword)}
                 secureTextEntry={!showConfirmPassword}
@@ -311,7 +314,9 @@ export default function SettingsDetailScreen() {
           onRequestClose={() => setShowDeleteModal(false)}
         >
           <View style={styles.modalOverlay}>
-            <ThemedView style={[styles.modalContent, { backgroundColor: secondaryBackgroundColor }]}>
+            <ThemedView
+              style={[styles.modalContent, { backgroundColor: secondaryBackgroundColor }]}
+            >
               <ThemedText type="subtitle" style={styles.modalTitle}>
                 Delete Account
               </ThemedText>
@@ -326,23 +331,29 @@ export default function SettingsDetailScreen() {
                 style={[
                   styles.modalInput,
                   {
-                    color: textColor,
-                    borderColor: borderColor + '40',
-                    backgroundColor: secondaryBackgroundColor,
+                    color: inputText,
+                    borderColor: inputBorder,
+                    backgroundColor: inputBackground,
                   },
                 ]}
                 placeholder="Type DELETE to confirm"
-                placeholderTextColor={borderColor + '80'}
+                placeholderTextColor={placeholderColor}
                 value={deleteConfirmText}
                 onChangeText={setDeleteConfirmText}
                 autoCapitalize="characters"
               />
               {error && (
-                <ThemedText style={styles.errorText}>{error}</ThemedText>
+                <ThemedText style={[styles.errorText, { color: errorTextColor }]}>
+                  {error}
+                </ThemedText>
               )}
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  style={[
+                    styles.modalButton,
+                    styles.modalButtonCancel,
+                    { backgroundColor: modalCancelBackground },
+                  ]}
                   onPress={() => {
                     setShowDeleteModal(false);
                     setDeleteConfirmText('');
@@ -491,7 +502,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorText: {
-    color: '#ff4444',
     fontSize: 14,
     marginBottom: 16,
   },
@@ -570,7 +580,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalButtonCancel: {
-    backgroundColor: 'rgba(128, 128, 128, 0.2)',
+    // backgroundColor is set dynamically
   },
   modalButtonDelete: {
     backgroundColor: '#ff4444',

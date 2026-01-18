@@ -52,6 +52,7 @@ class VideoCompositor:
         self.temp_dir = settings.temp_dir
         self.storage_service = StorageService()
     
+
     def get_random_background_video(self, db: Session) -> Optional[BackgroundVideo]:
         """
         Retrieve a random background video from the database.
@@ -73,6 +74,7 @@ class VideoCompositor:
         # Return BackgroundVideo instance or None if empty
         pass
     
+
     def download_from_s3(self, s3_url: str, local_file_path: str) -> None:
         """
         Download a file from S3 to local filesystem.
@@ -94,14 +96,15 @@ class VideoCompositor:
         # Parse S3 key from s3_url (extract path after bucket name)
         # Use self.storage_service.download_file() to download
         # Ensure parent directory exists before downloading
-        pass
+        self.storage_service.download_file(s3_url, local_file_path)
+
     
-    def generate_srt_file(self, captions: list[Caption], output_path: str) -> None:
+    def generate_srt_file(self, captions: list[dict], output_path: str) -> None:
         """
         Generate SRT subtitle file from caption records.
         
         Args:
-            captions: List of Caption model instances (ordered by sequence_order)
+            captions: List of Caption dictionaries (ordered by sequence_order)
             output_path: Path where SRT file should be saved
         
         Raises:
@@ -112,11 +115,16 @@ class VideoCompositor:
             - Generates standard SRT format with timestamps
             - SRT file is used by FFmpeg to burn captions into video
         """
-        # TODO: Implement SRT file generation
-        # Format: sequence number, start_time --> end_time, text
-        # Convert float seconds to SRT time format (HH:MM:SS,mmm)
-        # Write to output_path
-        pass
+        def format_time(time: float) -> str:
+            hours = int(time // 3600)
+            minutes = int((time % 3600) // 60)
+            seconds = int(time % 60)
+            milliseconds = int((time * 1000) % 1000)
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+
+        with open(output_path, 'w') as f:
+            for seq_order,caption in enumerate(captions):
+                f.write(f"{seq_order + 1}\n{format_time(caption['start_time'])} --> {format_time(caption['end_time'])}\n{caption['text']}\n\n")
     
     def composite_video(
         self,
@@ -155,8 +163,18 @@ class VideoCompositor:
         # Use subprocess.run() to execute FFmpeg
         # -shortest flag automatically trims to audio length
         # Handle errors and validate input files exist
-        pass
+        subprocess.run([
+            'ffmpeg',
+            '-i', background_video_path,
+            '-i', audio_path,
+            '-vf', f'subtitles={srt_path}',
+            '-shortest',
+            '-c:v', 'libx264',
+            '-c:a', 'aac',
+            output_video_path
+        ])
     
+
     def upload_video_to_s3(self, local_file_path: str, reel_id: int) -> str:
         """
         Upload final video file to S3.
@@ -173,11 +191,11 @@ class VideoCompositor:
             - S3 key format: "videos/reel_{reel_id}.mp4"
             - Returns URL to be saved in Reel.video_url
         """
-        # TODO: Implement S3 video upload
-        # Construct S3 key: f"videos/reel_{reel_id}.mp4"
-        # Use self.storage_service.upload_file() with content_type='video/mp4'
-        # Return the S3 URL
-        pass
+        return self.storage_service.upload_file(
+            local_file_path, 
+            f"videos/reel_{reel_id}.mp4", 
+            content_type='video/mp4'
+        )
     
     def update_reel_status(self, reel_id: int, video_url: str, db: Session) -> Reel:
         """
