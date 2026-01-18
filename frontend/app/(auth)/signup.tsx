@@ -12,7 +12,8 @@ export default function SignUpScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signUp, isLoading } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const { signUp, isLoading, error, clearError } = useAuth();
 
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'icon');
@@ -21,8 +22,20 @@ export default function SignUpScreen() {
 
   const handleSignUp = async () => {
     if (name && email && password) {
-      await signUp(name, email, password);
+      try {
+        await signUp(name, email, password);
+      } catch {
+        // Error is handled by auth context and displayed below
+      }
     }
+  };
+
+  const handleInputChange = (setter: (value: string) => void) => (value: string) => {
+    // Clear error when user starts typing
+    if (error) {
+      clearError();
+    }
+    setter(value);
   };
 
   return (
@@ -37,31 +50,53 @@ export default function SignUpScreen() {
         </ThemedText>
         <ThemedText style={styles.subtitle}>Join Brainrot News Reels today</ThemedText>
 
+        {/* Error Box */}
+        {error && (
+          <View style={styles.errorBox}>
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+          </View>
+        )}
+
         <View style={styles.form}>
           <TextInput
-            style={[styles.input, { color: textColor, borderColor: borderColor + '40' }]}
+            style={[
+              styles.input,
+              { color: textColor, borderColor: error ? '#ff4444' : borderColor + '40' },
+            ]}
             placeholder="Full Name"
             placeholderTextColor={borderColor}
             value={name}
-            onChangeText={setName}
+            onChangeText={handleInputChange(setName)}
           />
           <TextInput
-            style={[styles.input, { color: textColor, borderColor: borderColor + '40' }]}
+            style={[
+              styles.input,
+              { color: textColor, borderColor: error ? '#ff4444' : borderColor + '40' },
+            ]}
             placeholder="Email"
             placeholderTextColor={borderColor}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={handleInputChange(setEmail)}
             autoCapitalize="none"
             keyboardType="email-address"
           />
-          <TextInput
-            style={[styles.input, { color: textColor, borderColor: borderColor + '40' }]}
-            placeholder="Password"
-            placeholderTextColor={borderColor}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[
+                styles.input,
+                styles.passwordInput,
+                { color: textColor, borderColor: error ? '#ff4444' : borderColor + '40' },
+              ]}
+              placeholder="Password"
+              placeholderTextColor={borderColor}
+              value={password}
+              onChangeText={handleInputChange(setPassword)}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+              <IconSymbol name={showPassword ? 'eye.slash' : 'eye'} size={20} color={iconColor} />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
             style={[styles.button, { backgroundColor: buttonBackground }]}
@@ -116,6 +151,19 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     opacity: 0.6,
   },
+  errorBox: {
+    backgroundColor: '#ffebee',
+    borderColor: '#ff4444',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#d32f2f',
+    fontSize: 14,
+    textAlign: 'center',
+  },
   form: {
     gap: 16,
   },
@@ -125,6 +173,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    top: 18,
+    padding: 4,
   },
   button: {
     height: 56,
