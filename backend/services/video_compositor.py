@@ -166,12 +166,13 @@ class VideoCompositor:
         # Use subprocess.run() to execute FFmpeg
         # -shortest flag automatically trims to audio length
         # Handle errors and validate input files exist
+        style="Fontname=Impact,Fontsize=14,PrimaryColour=&H00FF4000,OutlineColour=&H000000,Outline=1,Alignment=10"
         subprocess.run([
             'ffmpeg',
             '-y',
             '-i', background_video_path,
             '-i', audio_path,
-            '-vf', f'subtitles={srt_path}',
+            '-vf', f"subtitles={srt_path}:force_style='{style}'",
             # Ensure we use background video + narration audio (not background audio)
             '-map', '0:v:0',
             '-map', '1:a:0',

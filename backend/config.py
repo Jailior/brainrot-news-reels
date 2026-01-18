@@ -82,7 +82,7 @@ class Settings(BaseSettings):
         case_sensitive = False
     
     # Global constants
-    MAX_CHAR_TO_DISPLAY: int = 100
+    MAX_CHAR_TO_DISPLAY: int = 40
 
 load_dotenv()
 

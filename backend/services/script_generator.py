@@ -72,7 +72,7 @@ class ScriptGenerator:
                 f"\nTitle: {article_title}\n" + \
                 f"\nContent: {article_content}\n" + \
                 "Only output the narration in plain text, no other text. Keep it under 1 minute for when it read aloud." + \
-                "Start with a attention grabbing hook"
+                "Start with a attention grabbing hook. Do not use any em-dashes."
 
         headers = get_json_headers()
         payload = {
