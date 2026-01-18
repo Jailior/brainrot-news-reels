@@ -16,7 +16,8 @@ from backend.models.article import Article
 from backend.models.reel import Reel
 from backend.models.caption import Caption
 from backend.models.background_video import BackgroundVideo
+from backend.models.user import User
 from backend.models.reel_watch import ReelWatch
 
-__all__ = ["Article", "Reel", "Caption", "BackgroundVideo", "ReelWatch"]
+__all__ = ["Article", "Reel", "Caption", "BackgroundVideo", "User", "ReelWatch"]
 
