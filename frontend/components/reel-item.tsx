@@ -21,6 +21,7 @@ interface ReelItemProps {
 
 export const ReelItem = React.memo(({ item, isActive }: ReelItemProps) => {
   const [isPaused, setIsPaused] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
 
   const player = useVideoPlayer(item.videoSource, (player) => {
     player.loop = true;
@@ -53,8 +54,8 @@ export const ReelItem = React.memo(({ item, isActive }: ReelItemProps) => {
       />
       {/* Right side action icons */}
       <View style={styles.iconContainer}>
-        <Pressable style={styles.iconButton}>
-          <Ionicons name="heart-outline" size={32} color="#fff" />
+        <Pressable style={styles.iconButton} onPress={() => setIsLiked(!isLiked)}>
+          <Ionicons name={isLiked ? "heart" : "heart-outline"} size={32} color={isLiked ? "#ff2d55" : "#fff"} />
         </Pressable>
         <Pressable style={styles.iconButton}>
           <Ionicons name="chatbubble-outline" size={30} color="#fff" />
