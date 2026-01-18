@@ -1,5 +1,6 @@
-import React from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, Pressable, StyleSheet } from 'react-native';
+import { VideoView, useVideoPlayer } from 'expo-video';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -9,20 +10,47 @@ export interface ReelItemData {
   subtitle: string;
   background: string;
   virtualIndex: number;
+  videoSource: any;
 }
 
 interface ReelItemProps {
   item: ReelItemData;
+  isActive: boolean;
 }
 
-export const ReelItem = React.memo(({ item }: ReelItemProps) => {
+export const ReelItem = React.memo(({ item, isActive }: ReelItemProps) => {
+  const [isPaused, setIsPaused] = useState(false);
+
+  const player = useVideoPlayer(item.videoSource, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+
+  const handlePress = () => {
+    setIsPaused((prev) => !prev);
+  };
+
+  useEffect(() => {
+    if (player) {
+      if (isActive && !isPaused) {
+        player.play();
+      } else {
+        player.pause();
+      }
+    }
+  }, [isActive, isPaused, player]);
+
   return (
-    <View style={[styles.itemContainer, { backgroundColor: item.background }]}>
-      <View style={styles.contentContainer}>
-        <Text style={styles.mainText}>{item.text}</Text>
-        <Text style={styles.subtitleText}>{item.subtitle}</Text>
-      </View>
-    </View>
+    <Pressable style={styles.itemContainer} onPress={handlePress}>
+      <VideoView
+        player={player}
+        contentFit="cover"
+        style={StyleSheet.absoluteFillObject}
+        nativeControls={false}
+        allowsFullscreen={false}
+      />
+    </Pressable>
   );
 });
 
@@ -32,25 +60,6 @@ const styles = StyleSheet.create({
   itemContainer: {
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  mainText: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    letterSpacing: 2,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    textAlign: 'center',
-    marginTop: 12,
-    fontWeight: '400',
+    backgroundColor: '#000',
   },
 });

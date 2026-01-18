@@ -5,6 +5,7 @@ import { useReelFeed } from '@/hooks/use-reel-feed';
 
 export default function FeedScreen() {
   const {
+    currentIndex,
     flatListRef,
     feedData,
     onViewableItemsChanged,
@@ -16,8 +17,10 @@ export default function FeedScreen() {
   } = useReelFeed();
 
   const renderItem = useCallback(
-    ({ item }: { item: ReelItemData }) => <ReelItem item={item} />,
-    []
+    ({ item, index }: { item: ReelItemData; index: number }) => (
+      <ReelItem item={item} isActive={index === currentIndex} />
+    ),
+    [currentIndex]
   );
 
   return (
@@ -39,10 +42,10 @@ export default function FeedScreen() {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
         getItemLayout={getItemLayout}
-        removeClippedSubviews
-        maxToRenderPerBatch={3}
-        windowSize={5}
-        initialNumToRender={2}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={2}
+        windowSize={3}
+        initialNumToRender={1}
       />
     </View>
   );
