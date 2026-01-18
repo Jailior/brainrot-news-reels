@@ -108,3 +108,17 @@ class ViewIncrementResponse(BaseModel):
     reel_id: int
     views: int
 
+
+class UserWatchedReelsResponse(BaseModel):
+    """
+    Response schema for user's watched reels endpoint.
+    
+    Returns a list of all reels that a user has watched.
+    Used by GET /api/reels/users/{user_id}/watched endpoint.
+    
+    Fields:
+        reels: List of ReelResponse objects that the user has watched
+    """
+    
+    reels: list[ReelResponse]
+
